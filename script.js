@@ -1,45 +1,140 @@
-// Variables to control game state
-let gameRunning = false; // Keeps track of whether game is active or not
-let dropMaker; // Will store our timer that creates drops regularly
+let score = 0;
+let timeLeft = 30;
 
-// Wait for button click to start the game
-document.getElementById("start-btn").addEventListener("click", startGame);
+let gameRunning = false;
+
+let dropMaker;
+let countdown;
+
+const scoreDisplay = document.getElementById("score");
+const timeDisplay = document.getElementById("time");
+const gameContainer = document.getElementById("game-container");
+const message = document.getElementById("message");
+
+document
+    .getElementById("start-btn")
+    .addEventListener("click", startGame);
+
+document
+    .getElementById("reset-btn")
+    .addEventListener("click", resetGame);
 
 function startGame() {
-  // Prevent multiple games from running at once
-  if (gameRunning) return;
 
-  gameRunning = true;
+    if (gameRunning) return;
 
-  // Create new drops every second (1000 milliseconds)
-  dropMaker = setInterval(createDrop, 1000);
+    gameRunning = true;
+
+    message.textContent = "";
+
+    dropMaker = setInterval(createDrop, 700);
+
+    countdown = setInterval(() => {
+
+        timeLeft--;
+
+        timeDisplay.textContent = timeLeft;
+
+        if (timeLeft <= 0) {
+            endGame();
+        }
+
+    }, 1000);
 }
 
 function createDrop() {
-  // Create a new div element that will be our water drop
-  const drop = document.createElement("div");
-  drop.className = "water-drop";
 
-  // Make drops different sizes for visual variety
-  const initialSize = 60;
-  const sizeMultiplier = Math.random() * 0.8 + 0.5;
-  const size = initialSize * sizeMultiplier;
-  drop.style.width = drop.style.height = `${size}px`;
+    const drop = document.createElement("div");
 
-  // Position the drop randomly across the game width
-  // Subtract 60 pixels to keep drops fully inside the container
-  const gameWidth = document.getElementById("game-container").offsetWidth;
-  const xPosition = Math.random() * (gameWidth - 60);
-  drop.style.left = xPosition + "px";
+    const isBad = Math.random() < 0.3;
 
-  // Make drops fall for 4 seconds
-  drop.style.animationDuration = "4s";
+    drop.classList.add("water-drop");
 
-  // Add the new drop to the game screen
-  document.getElementById("game-container").appendChild(drop);
+    if (isBad) {
+        drop.classList.add("bad-drop");
+    } else {
+        drop.classList.add("good-drop");
+    }
 
-  // Remove drops that reach the bottom (weren't clicked)
-  drop.addEventListener("animationend", () => {
-    drop.remove(); // Clean up drops that weren't caught
-  });
+    const size = 40 + Math.random() * 30;
+
+    drop.style.width = `${size}px`;
+    drop.style.height = `${size}px`;
+
+    const xPosition =
+        Math.random() *
+        (gameContainer.offsetWidth - size);
+
+    drop.style.left = xPosition + "px";
+
+    drop.style.animationDuration =
+        3 + Math.random() * 2 + "s";
+
+    drop.addEventListener("click", () => {
+
+        if (isBad) {
+            score--;
+        } else {
+            score++;
+        }
+
+        scoreDisplay.textContent = score;
+
+        checkWin();
+
+        drop.remove();
+    });
+
+    drop.addEventListener("animationend", () => {
+        drop.remove();
+    });
+
+    gameContainer.appendChild(drop);
+}
+
+function checkWin() {
+
+    if (score >= 15) {
+
+        message.textContent =
+            "🎉 You brought clean water to a community!";
+
+        gameContainer.style.backgroundColor = "#8BD1CB";
+
+        endGame();
+    }
+}
+
+function endGame() {
+
+    clearInterval(dropMaker);
+    clearInterval(countdown);
+
+    gameRunning = false;
+
+    if (score < 15) {
+
+        message.textContent =
+            `Game Over! Final Score: ${score}`;
+    }
+}
+
+function resetGame() {
+
+    clearInterval(dropMaker);
+    clearInterval(countdown);
+
+    gameRunning = false;
+
+    score = 0;
+    timeLeft = 30;
+
+    scoreDisplay.textContent = score;
+    timeDisplay.textContent = timeLeft;
+
+    message.textContent = "";
+
+    gameContainer.style.backgroundColor = "#e6f7ff";
+
+    gameContainer.innerHTML = "";
 }
