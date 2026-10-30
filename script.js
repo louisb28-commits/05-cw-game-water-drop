@@ -5,14 +5,28 @@ let gameRunning = false;
 let dropMaker;
 let countdown;
 
-let winScore = 15;
-let dropSpeed = 700;
-
 const scoreDisplay = document.getElementById("score");
 const timeDisplay = document.getElementById("time");
 const gameContainer = document.getElementById("game-container");
 const message = document.getElementById("message");
-const difficultySelect = document.getElementById("difficulty");
+
+// Milestone messages
+const milestones = [
+    {
+        score: 5,
+        message: "💧 Great Start!"
+    },
+    {
+        score: 10,
+        message: "🚰 Halfway There!"
+    },
+    {
+        score: 13,
+        message: "🌍 Almost enough clean water!"
+    }
+];
+
+let shownMilestones = [];
 
 document
     .getElementById("start-btn")
@@ -25,35 +39,20 @@ document
 function startGame() {
     if (gameRunning) return;
 
-    const difficulty = difficultySelect.value;
-
-    switch (difficulty) {
-        case "easy":
-            winScore = 10;
-            timeLeft = 40;
-            dropSpeed = 900;
-            break;
-
-        case "hard":
-            winScore = 20;
-            timeLeft = 20;
-            dropSpeed = 500;
-            break;
-
-        default:
-            winScore = 15;
-            timeLeft = 30;
-            dropSpeed = 700;
-    }
+    gameRunning = true;
 
     score = 0;
+    timeLeft = 30;
+    shownMilestones = [];
+
     scoreDisplay.textContent = score;
     timeDisplay.textContent = timeLeft;
 
     message.textContent = "";
-    gameRunning = true;
 
-    dropMaker = setInterval(createDrop, dropSpeed);
+    gameContainer.innerHTML = "";
+
+    dropMaker = setInterval(createDrop, 700);
 
     countdown = setInterval(() => {
         timeLeft--;
@@ -71,7 +70,12 @@ function createDrop() {
     const isBad = Math.random() < 0.3;
 
     drop.classList.add("water-drop");
-    drop.classList.add(isBad ? "bad-drop" : "good-drop");
+
+    if (isBad) {
+        drop.classList.add("bad-drop");
+    } else {
+        drop.classList.add("good-drop");
+    }
 
     const size = 40 + Math.random() * 30;
 
@@ -90,13 +94,18 @@ function createDrop() {
     drop.addEventListener("click", () => {
         if (!gameRunning) return;
 
-        score += isBad ? -1 : 1;
+        if (isBad) {
+            score--;
+        } else {
+            score++;
+        }
 
         scoreDisplay.textContent = score;
 
-        drop.remove(); // Requirement: remove DOM element
-
+        checkMilestones();
         checkWin();
+
+        drop.remove();
     });
 
     drop.addEventListener("animationend", () => {
@@ -106,8 +115,23 @@ function createDrop() {
     gameContainer.appendChild(drop);
 }
 
+function checkMilestones() {
+    milestones.forEach(milestone => {
+        if (
+            score >= milestone.score &&
+            !shownMilestones.includes(milestone.score)
+        ) {
+            message.textContent = milestone.message;
+
+            shownMilestones.push(
+                milestone.score
+            );
+        }
+    });
+}
+
 function checkWin() {
-    if (score >= winScore) {
+    if (score >= 15) {
         message.textContent =
             "🎉 You brought clean water to a community!";
 
@@ -137,6 +161,8 @@ function resetGame() {
     gameRunning = false;
     score = 0;
     timeLeft = 30;
+
+    shownMilestones = [];
 
     scoreDisplay.textContent = score;
     timeDisplay.textContent = timeLeft;
